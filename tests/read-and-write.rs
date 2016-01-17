@@ -1,4 +1,3 @@
-#![feature(convert,stmt_expr_attributes)]
 extern crate libc;
 extern crate ptrace;
 extern crate posix_ipc as ipc;
@@ -39,13 +38,25 @@ fn test_read_string() {
     }
 }
 
+#[cfg(target_arch = "x64")]
+fn get_word() -> u64 {
+    return 0x0123456789abcdef;
+}
+
+#[cfg(not(target_arch = "x64"))]
+fn get_word() -> u32 {
+    return 0x01234567;
+}
+
 #[test]
 fn test_write() {
     let (buf_addr, pid) = fork_with_buffer("foobar");
-    #[cfg(target_arch = "x64")]
-    let foo_word = 0x0123456789abcdef;
-    #[cfg(not(target_arch = "x64"))]
-    let foo_word = 0x01234567;
+    let foo_word = get_word();
+    //let foo_word = if cfg!(target_arch = "x64") {
+    //    return 0x0123456789abcdef;
+    //} else {
+    //    return 0x01234567;
+    //};
 
     let writer = ptrace::Writer::new(pid);
     match writer.poke_data(buf_addr as Address, foo_word) {
@@ -70,7 +81,7 @@ fn test_write_small_buf() {
         Ok(_) => {
             let reader = ptrace::Reader::new(pid);
             let v = reader.read_string(buf_addr as Address).ok().expect("Could not read back buffer");
-            assert_eq!(str::from_utf8(v.as_slice()), Ok("FOOBAR and then some"));
+            assert_eq!(str::from_utf8(&v), Ok("FOOBAR and then some"));
         },
         Err(_) =>
             panic!("Error while writing buffer: {:?}", Error::last_os_error())
@@ -85,12 +96,12 @@ fn test_write_large_buf() {
     let (buf_addr, pid) = fork_with_buffer(s);
     let writer = ptrace::Writer::new(pid);
     let mut buf: Vec<u8> = Vec::new();
-    buf.extend_from_slice("FRIDDLE FRITZ FROB BAZ BAR FOO".as_bytes());
+    buf.extend("FRIDDLE FRITZ FROB BAZ BAR FOO".as_bytes());
     match writer.write_data(buf_addr as Address, &buf) {
         Ok(_) => {
             let reader = ptrace::Reader::new(pid);
             let v = reader.read_string(buf_addr as Address).ok().expect("Could not read back buffer");
-            assert_eq!(str::from_utf8(v.as_slice()), str::from_utf8(buf.as_slice()));
+            assert_eq!(str::from_utf8(&v), str::from_utf8(&buf));
         },
         Err(_) =>
             panic!("Error while writing buffer: {:?}", Error::last_os_error())

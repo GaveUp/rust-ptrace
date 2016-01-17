@@ -1,4 +1,4 @@
-#![feature(step_by)]
+//#![feature(step_by)]
 
 extern crate libc;
 extern crate posix_ipc as ipc;
@@ -14,6 +14,7 @@ use std::vec::Vec;
 use std::mem;
 use num::FromPrimitive;
 use nix::errno::errno;
+use num::range_step;
 
 #[cfg(target_arch = "x64")]
 pub type Address = u64;
@@ -275,7 +276,8 @@ impl Writer {
         let max_addr = address + buf.len() as Address;
         // The last word we can completely overwrite
         let align_end = max_addr - (max_addr % mem::size_of::<Word>() as Address);
-        for write_addr in (address..align_end).step_by(mem::size_of::<Word>() as Address) {
+        for write_addr in range_step(address, align_end, mem::size_of::<Word>() as Address) {
+        //for write_addr in (address..align_end).step_by(mem::size_of::<Word>() as Address) {
             let mut d: Word = 0;
             let buf_idx = (write_addr - address) as usize;
             for word_idx in 0..mem::size_of::<Word>() {
@@ -330,7 +332,8 @@ impl Reader {
         let mut buf: Vec<u8> = Vec::with_capacity(1024);
         let max_addr = address + buf.capacity() as Address;
         let align_end = max_addr - (max_addr % mem::size_of::<Word>() as Address);
-        'finish: for read_addr in (address..align_end).step_by(mem::size_of::<Word>() as Address) {
+        //'finish: for read_addr in (address..align_end).step_by(mem::size_of::<Word>() as Address) {
+        'finish: for read_addr in range_step(address, align_end, mem::size_of::<Word>() as Address) {
             let d;
             match self.peek_data(read_addr) {
                 Ok(v) => d = v,
