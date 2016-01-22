@@ -16,14 +16,14 @@ use num::FromPrimitive;
 use nix::errno::errno;
 use num::range_step;
 
-#[cfg(target_arch = "x64")]
+#[cfg(target_arch = "x86_64")]
 pub type Address = u64;
-#[cfg(not(target_arch = "x64"))]
+#[cfg(not(target_arch = "x86_64"))]
 pub type Address = u32;
 
-#[cfg(target_arch = "x64")]
+#[cfg(target_arch = "x86_64")]
 pub type Word = u64;
-#[cfg(not(target_arch = "x64"))]
+#[cfg(not(target_arch = "x86_64"))]
 pub type Word = u32;
 
 #[derive(Copy, Clone)]

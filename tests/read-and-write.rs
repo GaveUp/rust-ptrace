@@ -38,12 +38,12 @@ fn test_read_string() {
     }
 }
 
-#[cfg(target_arch = "x64")]
+#[cfg(target_arch = "x86_64")]
 fn get_word() -> u64 {
     return 0x0123456789abcdef;
 }
 
-#[cfg(not(target_arch = "x64"))]
+#[cfg(not(target_arch = "x86_64"))]
 fn get_word() -> u32 {
     return 0x01234567;
 }
