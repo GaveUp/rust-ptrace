@@ -11,6 +11,7 @@ readme = "README.md"
 name = "ptrace"
 
 [dependencies]
+bitflags="0.1"
 posix-ipc={git="https://github.com/GaveUp/rust-posix-ipc.git"}
 num="0.1.30"
 nix="0.4.2"
