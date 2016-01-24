@@ -242,22 +242,6 @@ trait Bytes {
 
 impl Bytes for Word {
     fn bytes(self) -> Vec<u8> {
-        (0..mem::size_of::<Word>()).map(|x| get_byte(self, x)).collect()
+        (0..mem::size_of::<Word>()).map(|x| ((self >> (x * 8)) & 0xff) as u8).collect()
     }
-}
-
-fn get_byte(d: Word, byte_idx: usize) -> u8 {
-    assert!(byte_idx < mem::size_of::<Word>());
-    ((d >> (byte_idx * 8)) & 0xff) as u8
-}
-
-#[test]
-pub fn test_get_byte() {
-    assert_eq!(get_byte(0, 0), 0);
-    assert_eq!(get_byte(!0, 0), 0xff);
-    assert_eq!(get_byte(!0, mem::size_of::<Word>()-1), 0xff);
-    assert_eq!(get_byte(0, mem::size_of::<Word>()-1), 0x00);
-//    assert_eq!(get_byte(0xffffffffffaa, 0), 0xaa);
-//    assert_eq!(get_byte(0x0123456789ab, 1), 0x89);
-//    assert_eq!(get_byte(0x0123456789ab, 4), 0x23);
 }
