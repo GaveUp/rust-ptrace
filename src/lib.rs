@@ -12,14 +12,20 @@ use num::FromPrimitive;
 use nix::errno::errno;
 
 #[cfg(target_arch = "x86_64")]
-pub type Address = u64;
-#[cfg(not(target_arch = "x86_64"))]
-pub type Address = u32;
+mod arch {
+    pub type Address = u64;
+    pub type Word = u64;
+    pub const WORD_SIZE: usize = 8;
+}
 
-#[cfg(target_arch = "x86_64")]
-pub type Word = u64;
 #[cfg(not(target_arch = "x86_64"))]
-pub type Word = u32;
+mod arch {
+    pub type Address = u32;
+    pub type Word = u32;
+    pub const WORD_SIZE: usize = 4;
+}
+
+pub use arch::*;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Request {
@@ -196,11 +202,9 @@ impl Writer {
     }
 
     pub fn write_data(&self, address: Address, buf: &Vec<u8>) -> Result<(), usize> {
-        let word_size = mem::size_of::<Word>();
-        //for write_addr in (0..buf.len()).map(|x| address + x as Address * word_size as Address) {
-        for (i, word_vec) in buf.chunks(word_size).enumerate() { 
-            let write_addr = address + word_size as Address * i as Address as Address;
-            if word_vec.len() == word_size {
+        for (i, word_vec) in buf.chunks(WORD_SIZE).enumerate() { 
+            let write_addr = address + WORD_SIZE as Address * i as Address as Address;
+            if word_vec.len() == WORD_SIZE {
                 try!(self.poke_data(write_addr, word_vec.iter().rev().fold(0 as Word, |w, &x| w << 8 | x as Word)));
             } else {
                 let b: Word = try!(Reader::new(self.pid).peek_data(write_addr)) >> 8 * word_vec.len();
@@ -223,14 +227,14 @@ impl Reader {
 
     pub fn read_string(&self, address: Address) -> Result<Vec<u8>, usize> {
         let mut buf: Vec<u8> = Vec::with_capacity(1024);
-	for read_addr in (0..).map(|x| address + x * mem::size_of::<Address>() as Address) {
+	for read_addr in (0..).map(|x| address + x * WORD_SIZE as Address) {
             let d: Vec<u8> = try!(self.peek_data(read_addr))
                                  .bytes()
                                  .iter()
                                  .take_while(|x| **x != 0)
                                  .map(|x| *x).collect();
             buf.extend_from_slice(&d);
-            if d.len() < mem::size_of::<Word>() { break; }
+            if d.len() < WORD_SIZE { break; }
         }
         return Ok(buf);
     }
@@ -242,6 +246,6 @@ trait Bytes {
 
 impl Bytes for Word {
     fn bytes(self) -> Vec<u8> {
-        (0..mem::size_of::<Word>()).map(|x| ((self >> (x * 8)) & 0xff) as u8).collect()
+        (0..WORD_SIZE).map(|x| ((self >> (x * 8)) & 0xff) as u8).collect()
     }
 }
