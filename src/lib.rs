@@ -29,35 +29,35 @@ pub use arch::*;
 
 #[derive(Debug, Copy, Clone)]
 pub enum Request {
-  TraceMe = 0,
-  PeekText = 1,
-  PeekData = 2,
-  PeekUser = 3,
-  PokeText = 4,
-  PokeData = 5,
-  PokeUser = 6,
-  Continue = 7,
-  Kill = 8,
-  SingleStep = 9,
-  GetRegs = 12,
-  SetRegs = 13,
-  Attach = 16,
-  Detatch = 17,
-  SetOptions = 0x4200,
-  Seize = 0x4206
+    TraceMe = 0,
+    PeekText = 1,
+    PeekData = 2,
+    PeekUser = 3,
+    PokeText = 4,
+    PokeData = 5,
+    PokeUser = 6,
+    Continue = 7,
+    Kill = 8,
+    SingleStep = 9,
+    GetRegs = 12,
+    SetRegs = 13,
+    Attach = 16,
+    Detatch = 17,
+    SetOptions = 0x4200,
+    Seize = 0x4206
 }
 
 enum_from_primitive! {
     #[derive(Clone, Copy, Debug)]
     pub enum Event {
-      Fork = 1,
-      VFork = 2,
-      Clone = 3,
-      Exec = 4,
-      VForkDone = 5,
-      Exit = 6,
-      Seccomp = 7,
-      Stop = 128
+        Fork = 1,
+        VFork = 2,
+        Clone = 3,
+        Exec = 4,
+        VForkDone = 5,
+        Exit = 6,
+        Seccomp = 7,
+        Stop = 128
     }
 }
 
@@ -70,59 +70,58 @@ impl Event {
 
 #[derive(Clone, Copy, Default, Debug)]
 pub struct Registers {
-  pub r15: Word,
-  pub r14: Word,
-  pub r13: Word,
-  pub r12: Word,
-  pub rbp: Word,
-  pub rbx: Word,
-  pub r11: Word,
-  pub r10: Word,
-  pub r9: Word,
-  pub r8: Word,
-  pub rax: Word,
-  pub rcx: Word,
-  pub rdx: Word,
-  pub rsi: Word,
-  pub rdi: Word,
-  pub orig_rax: Word,
-  pub rip: Word,
-  pub cs: Word,
-  pub eflags: Word,
-  pub rsp: Word,
-  pub ss: Word,
-  pub fs_base: Word,
-  pub gs_base: Word,
-  pub ds: Word,
-  pub es: Word,
-  pub fs: Word,
-  pub gs: Word
+    pub r15: Word,
+    pub r14: Word,
+    pub r13: Word,
+    pub r12: Word,
+    pub rbp: Word,
+    pub rbx: Word,
+    pub r11: Word,
+    pub r10: Word,
+    pub r9: Word,
+    pub r8: Word,
+    pub rax: Word,
+    pub rcx: Word,
+    pub rdx: Word,
+    pub rsi: Word,
+    pub rdi: Word,
+    pub orig_rax: Word,
+    pub rip: Word,
+    pub cs: Word,
+    pub eflags: Word,
+    pub rsp: Word,
+    pub ss: Word,
+    pub fs_base: Word,
+    pub gs_base: Word,
+    pub ds: Word,
+    pub es: Word,
+    pub fs: Word,
+    pub gs: Word
 }
 
 bitflags! {
-  flags Options: u32 {
-    const SYSGOOD = 1,
-    const TRACEFORK = 1 << 1,
-    const TRACEVFORK = 1 << 2,
-    const TRACECLONE = 1 << 3,
-    const TRACEEXEC = 1 << 4,
-    const TRACEVFORKDONE = 1 << 5,
-    const TRACEEXIT = 1 << 6,
-    const TRACESECCOMP = 1 << 7,
-    const EXITKILL = 1 << 20
-  }
+    flags Options: u32 {
+        const SYSGOOD = 1,
+        const TRACEFORK = 1 << 1,
+        const TRACEVFORK = 1 << 2,
+        const TRACECLONE = 1 << 3,
+        const TRACEEXEC = 1 << 4,
+        const TRACEVFORKDONE = 1 << 5,
+        const TRACEEXIT = 1 << 6,
+        const TRACESECCOMP = 1 << 7,
+        const EXITKILL = 1 << 20
+    }
 }
 
 pub fn setoptions(pid: libc::pid_t, opts: Options) -> Result<libc::c_long, usize> {
-    ptrace(Request::SetOptions, pid, ptr::null_mut(), opts.bits as *mut
-    libc::c_void)
+    ptrace(Request::SetOptions, pid, ptr::null_mut(), opts.bits as *mut libc::c_void)
 }
 
 pub fn getregs(pid: libc::pid_t) -> Result<Registers, usize> {
-  let mut buf: Registers = Default::default();
-  let buf_mut: *mut Registers = &mut buf;
+    let mut buf: Registers = Default::default();
+    let buf_mut: *mut Registers = &mut buf;
 
-  ptrace(Request::GetRegs, pid, ptr::null_mut(), buf_mut as *mut libc::c_void).map(|_| buf)
+    ptrace(Request::GetRegs, pid, ptr::null_mut(), buf_mut as *mut libc::c_void).map(|_| buf)
 }
 
 pub fn setregs(pid: libc::pid_t, regs: &Registers) -> Result<libc::c_long, usize> {
@@ -133,7 +132,7 @@ pub fn setregs(pid: libc::pid_t, regs: &Registers) -> Result<libc::c_long, usize
 }
 
 pub fn seize(pid: libc::pid_t) -> Result<libc::c_long, usize> {
-        ptrace(Request::Seize, pid, ptr::null_mut(), ptr::null_mut())
+    ptrace(Request::Seize, pid, ptr::null_mut(), ptr::null_mut())
 }
 
 pub fn attach(pid: libc::pid_t) -> Result<libc::c_long, usize> {
@@ -153,25 +152,25 @@ pub fn traceme() -> Result<libc::c_long, usize> {
 }
 
 fn ptrace(request: Request, pid: libc::pid_t,
-       addr: *mut libc::c_void, data: *mut libc::c_void) -> Result<libc::c_long, usize> {
-    extern {
-      fn ptrace(request: libc::c_int, pid: libc::pid_t,
-                addr: *mut libc::c_void, data: *mut libc::c_void) -> libc::c_long;
-    }
-unsafe {
-  let v = ptrace(request as libc::c_int, pid, addr, data);
+          addr: *mut libc::c_void, data: *mut libc::c_void) -> Result<libc::c_long, usize> {
+              extern {
+                  fn ptrace(request: libc::c_int, pid: libc::pid_t,
+                            addr: *mut libc::c_void, data: *mut libc::c_void) -> libc::c_long;
+              }
+              unsafe {
+                  let v = ptrace(request as libc::c_int, pid, addr, data);
 
-  if v == -1 && errno() != 0 {
-    Result::Err(errno() as usize)
-  } else {
-    Ok(v)
-  }
-}
-}
+                  if v == -1 && errno() != 0 {
+                      Result::Err(errno() as usize)
+                  } else {
+                      Ok(v)
+                  }
+              }
+          }
 
 #[derive(Clone, Copy)]
 pub struct Reader {
-  pub pid: libc::pid_t
+    pub pid: libc::pid_t
 }
 
 #[derive(Clone, Copy)]
@@ -192,11 +191,11 @@ impl Writer {
 
     pub unsafe fn write_object<T: Sized>(&self, data: &T) -> Result<(), usize> {
         let mut buf = Vec::with_capacity(mem::size_of::<T>());
-            let tptr: *const T = data;
-            let p: *const u8 = mem::transmute(tptr);
-            for i in 0..buf.capacity() {
-                buf.push(*p.offset(i as isize));
-            }
+        let tptr: *const T = data;
+        let p: *const u8 = mem::transmute(tptr);
+        for i in 0..buf.capacity() {
+            buf.push(*p.offset(i as isize));
+        }
 
         Ok(())
     }
@@ -217,22 +216,22 @@ impl Writer {
 }
 
 impl Reader {
-  pub fn new(pid: libc::pid_t) -> Reader {
-    Reader { pid: pid }
-  }
+    pub fn new(pid: libc::pid_t) -> Reader {
+        Reader { pid: pid }
+    }
 
     pub fn peek_data(&self, address: Address) -> Result<Word, usize> {
-            ptrace(Request::PeekData, self.pid, address as *mut libc::c_void, ptr::null_mut()).map(|x| x as Word)
+        ptrace(Request::PeekData, self.pid, address as *mut libc::c_void, ptr::null_mut()).map(|x| x as Word)
     }
 
     pub fn read_string(&self, address: Address) -> Result<Vec<u8>, usize> {
         let mut buf: Vec<u8> = Vec::with_capacity(1024);
-	for read_addr in (0..).map(|x| address + x * WORD_SIZE as Address) {
+        for read_addr in (0..).map(|x| address + x * WORD_SIZE as Address) {
             let d: Vec<u8> = try!(self.peek_data(read_addr))
-                                 .bytes()
-                                 .iter()
-                                 .take_while(|x| **x != 0)
-                                 .map(|x| *x).collect();
+                .bytes()
+                .iter()
+                .take_while(|x| **x != 0)
+                .map(|x| *x).collect();
             buf.extend_from_slice(&d);
             if d.len() < WORD_SIZE { break; }
         }
